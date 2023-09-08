@@ -1,0 +1,33 @@
+module fetch_cycle_tb();
+
+reg clk=1'b1,rst,pcsrce;
+reg [31:0] pctargete;
+wire [31:0] instrd,pcd,pcplus4d;
+
+fetch_cycle dut(.clk(clk),.rst(rst),.pcsrce(pcsrce),.pctargete(pctargete),.instrd(instrd),.pcd(pcd),.pcplus4d(pcplus4d));
+
+always
+begin
+clk=~clk;
+#50;
+end
+
+initial
+begin
+rst<=1'b1;
+#200;
+rst<=1'b0;
+pcsrce<=1'b0;
+pctargete<=32'h00000000;
+#500;
+$finish;
+end
+
+initial
+begin
+$dumpfile("dump.vcd");
+$dumpvars(0);
+end
+
+endmodule
+

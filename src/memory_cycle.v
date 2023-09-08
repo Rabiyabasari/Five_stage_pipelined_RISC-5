@@ -1,0 +1,66 @@
+
+module memory_cycle(clk, rst, regwritem, memwritem, resultsrcm, rd_m, pcplus4m, writedatam, 
+    alu_resultm, regwritew, resultsrcw, rd_w, pcplus4w, alu_resultw, readdataw);
+    
+    // declaration of i/os
+    input clk, rst, regwritem, memwritem, resultsrcm;
+    input [4:0] rd_m; 
+    input [31:0] pcplus4m, writedatam, alu_resultm;
+
+    output regwritew, resultsrcw; 
+    output [4:0] rd_w;
+    output [31:0] pcplus4w, alu_resultw, readdataw;
+
+    // declaration of interim wires
+    wire [31:0] readdatam;
+
+    // declaration of interim registers
+    reg regwritem_r, resultsrcm_r;
+    reg [4:0] rd_m_r;
+    reg [31:0] pcplus4m_r, alu_resultm_r, readdatam_r;
+
+    // declaration of module initiation
+    data_memory dmem (
+                        .clk(clk),
+                        .rst(rst),
+                        .we(memwritem),
+                        .wd(writedatam),
+                        .a(alu_resultm),
+                        .rd(readdatam)
+                    );
+
+    // memory stage register logic
+    always @(posedge clk or posedge rst)
+    begin
+        if (rst == 1'b1) 
+        begin
+            regwritem_r <= 1'b0; 
+            resultsrcm_r <= 1'b0;
+            rd_m_r <= 5'h00;
+            pcplus4m_r <= 32'h00000000; 
+            alu_resultm_r <= 32'h00000000; 
+            readdatam_r <= 32'h00000000;
+        end
+        else 
+        begin
+            regwritem_r <= regwritem; 
+            resultsrcm_r <= resultsrcm;
+            rd_m_r <= rd_m;
+            pcplus4m_r <= pcplus4m; 
+            alu_resultm_r <= alu_resultm; 
+            readdatam_r <= readdatam;
+        end
+    end 
+
+    // declaration of output assignments
+    assign regwritew = regwritem_r;
+    assign resultsrcw = resultsrcm_r;
+    assign rd_w = rd_m_r;
+    assign pcplus4w = pcplus4m_r;
+    assign alu_resultw = alu_resultm_r;
+    assign readdataw = readdatam_r;
+
+endmodule
+
+
+

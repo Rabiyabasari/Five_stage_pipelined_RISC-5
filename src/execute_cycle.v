@@ -1,0 +1,111 @@
+module execute_cycle(clk, rst, regwritee, alusrce, memwritee, resultsrce, branche, 
+alucontrole,rd1_e, rd2_e, imm_ext_e, rd_e, pce, pcplus4e, pcsrce, pctargete, regwritem, 
+memwritem, resultsrcm, rd_m, pcplus4m, writedatam, alu_resultm, resultw,forwarda_e,forwardb_e);
+
+// declaration i/os
+input clk, rst, regwritee,alusrce,memwritee,resultsrce,branche;
+input [2:0] alucontrole;
+input [31:0] rd1_e, rd2_e, imm_ext_e;
+input [4:0] rd_e;
+input [31:0] pce, pcplus4e;
+input [31:0] resultw;
+input [1:0] forwarda_e, forwardb_e;
+
+output pcsrce, regwritem, memwritem, resultsrcm;
+output [4:0] rd_m; 
+output [31:0] pcplus4m, writedatam, alu_resultm;
+output [31:0] pctargete;
+
+    // declaration of interim wires
+wire [31:0] src_a, src_b_interim, src_b;
+wire [31:0] resulte;
+wire zeroe;
+
+    // declaration of register
+reg regwritee_r, memwritee_r, resultsrce_r;
+reg [4:0] rd_e_r;
+reg [31:0] pcplus4e_r, rd2_e_r, resulte_r;
+
+    // declaration of modules
+    // 3 by 1 mux for source a
+   mux_3_by_1 srca_mux (
+                        .a(rd1_e),
+                        .b(resultw),
+                        .c(alu_resultm),
+                        .s(forwarda_e),
+                        .d(src_a)
+                        );
+
+    // 3 by 1 mux for source b
+    mux_3_by_1 srcb_mux (
+                        .a(rd2_e),
+                        .b(resultw),
+                        .c(alu_resultm),
+                        .s(forwardb_e),
+                        .d(src_b_interim)
+                        );
+    // alu src mux
+    mux alu_src_mux (
+            .a(src_b_interim),
+            .b(imm_ext_e),
+            .s(alusrce),
+            .c(src_b)
+            );
+
+    // alu unit
+    alu alu (
+            .a(src_a),
+            .b(src_b),
+            .result(resulte),
+            .alucontrol(alucontrole),
+            .v(),
+            .c(),
+            .z(zeroe),
+            .n()
+            );
+
+
+    // adder
+    pc_adder branch_adder (
+            .a(pce),
+            .b(imm_ext_e),
+            .c(pctargete)
+            );
+
+    // register logic
+    always @(posedge clk or posedge rst) begin
+        if(rst == 1'b1) 
+        begin
+            regwritee_r <= 1'b0; 
+            memwritee_r <= 1'b0; 
+            resultsrce_r <= 1'b0;
+            rd_e_r <= 5'h00;
+            pcplus4e_r <= 32'h00000000; 
+            rd2_e_r <= 32'h00000000; 
+            resulte_r <= 32'h00000000;
+        end
+        else 
+        begin
+            regwritee_r <= regwritee; 
+            memwritee_r <= memwritee; 
+            resultsrce_r <= resultsrce;
+            rd_e_r <= rd_e;
+            pcplus4e_r <= pcplus4e; 
+            rd2_e_r <= src_b_interim; 
+            resulte_r <= resulte;
+        end
+    end
+
+    // output assignments
+    assign pcsrce = zeroe &  branche;
+    assign regwritem = regwritee_r;
+    assign memwritem = memwritee_r;
+    assign resultsrcm = resultsrce_r;
+    assign rd_m = rd_e_r;
+    assign pcplus4m = pcplus4e_r;
+    assign writedatam = rd2_e_r;
+    assign alu_resultm = resulte_r;
+
+endmodule
+
+
